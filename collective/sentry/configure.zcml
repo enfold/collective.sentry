@@ -1,0 +1,38 @@
+<configure
+    xmlns="http://namespaces.zope.org/zope"
+    xmlns:zcml="http://namespaces.zope.org/zcml"
+    xmlns:five="http://namespaces.zope.org/five"
+    xmlns:i18n="http://namespaces.zope.org/i18n"
+    xmlns:browser="http://namespaces.zope.org/browser"
+    xmlns:cmf="http://namespaces.zope.org/cmf"
+    i18n_domain="collective.sentry">
+
+    <five:registerPackage package="." initialize=".initialize" />
+
+    <cmf:registerDirectory name="collective_sentry" />
+
+    <include package=".browser" />
+
+    <include file="profiles.zcml" />
+
+    <browser:page
+        for="*"
+        name="js_control"
+        class=".track_js.Control"
+        permission="zope2.View"
+        allowed_attributes="should_track_js"
+        />
+
+    <browser:page
+        for="*"
+        name="sentry.config.js"
+        class=".track_js.SentryConfig"
+        permission="zope2.View"
+        />
+
+    <browser:resourceDirectory
+        name="collective.sentry"
+        directory="static"
+        />
+
+</configure>

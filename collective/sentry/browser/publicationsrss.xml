@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet title="XSL_formatting" type="text/xsl" href="/shared/bsp/xsl/rss/nolsol.xsl"?>
+
+<rss 
+    xmlns:media="http://search.yahoo.com/mrss/" 
+    xmlns:atom="http://www.w3.org/2005/Atom" 
+    xmlns:tal="http://xml.zope.org/namespaces/tal"
+    xmlns:i18n="http://xml.zope.org/namespaces/i18n"
+    xmlns:metal="http://xml.zope.org/namespaces/metal"
+    version="2.0"
+    tal:define="base_url context/portal_url;
+    pubtype view/getCurrentPubType;
+    lang python: context.portal_languages.getPreferredLanguage();
+    availablePubs view/getPublications">
+    <channel>
+        <title>IAS Plus</title>
+        <link
+            tal:content="python: base_url + '/@@publicationsrss?pubtype=' + pubtype">
+        </link>
+        <description>
+            IAS Plus Publication Communications
+        </description>  
+        <language tal:content="lang">
+            en
+        </language>  
+        <atom:link tal:attributes="href python: base_url + '/@@publicationsrss?pubtype=' + pubtype" rel="self" type="application/rss+xml"/> 
+        
+        <tal:block
+            tal:repeat="availablePub availablePubs">
+            
+            <item> 
+              <title tal:content="python: availablePub.Title">title</title>  
+              <description tal:content="python: availablePub.Description"></description>  
+              <link tal:content="python: '%s?id=%s:email:one2one'%(availablePub.getURL(),availablePub.Language)"></link>  
+              <guid isPermaLink="true" tal:content="python: availablePub.getURL()"></guid>  
+              <pubDate tal:content="python: availablePub.getDateAdded.rfc822()">
+                  Thu, 12 Jan 2012 17:34:54 GMT
+              </pubDate>  
+            </item>
+        </tal:block>
+    </channel>
+</rss>

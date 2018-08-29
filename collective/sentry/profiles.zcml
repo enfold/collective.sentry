@@ -1,0 +1,30 @@
+<configure
+    xmlns="http://namespaces.zope.org/genericsetup">
+
+    <registerProfile
+        name="default"
+        title="collective.sentry"
+        description='Extension profile for collective.sentry Product'
+        provides="Products.GenericSetup.interfaces.EXTENSION"
+        directory="profiles/default"
+        />
+
+    <upgradeStep
+        title="Upgrade collective.sentry default profile to version 2"
+        description="Upgrade collective.sentry default profile to version 2"
+        source="1"
+        destination="2"
+        handler=".upgradehandlers.upgrade_default_from_1_to_2"
+        profile="collective.sentry:default"
+        />
+
+    <upgradeDepends
+        title="Upgrade collective.sentry default profile to version 3"
+        description="New version of Sentry and Sentry JS"
+        source="2"
+        destination="3"
+        profile="collective.sentry:default"
+        import_steps="jsregistry plone.app.registry"
+        />
+
+</configure>

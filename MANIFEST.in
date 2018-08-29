@@ -1,0 +1,6 @@
+recursive-include collective *
+include *.txt
+include MANIFEST.in
+include *.py
+include buildout.cfg
+global-exclude *pyc

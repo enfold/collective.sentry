@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+<tool-setup>
+    <required
+        tool_id="error_log"
+        class="collective.sentry.error_log.GetSentryErrorLog"
+        />
+</tool-setup>

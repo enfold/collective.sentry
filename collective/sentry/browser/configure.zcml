@@ -1,0 +1,13 @@
+<configure
+    xmlns="http://namespaces.zope.org/zope"
+    xmlns:i18n="http://namespaces.zope.org/i18n"
+    i18n_domain="collective.sentry">
+
+    <adapter
+        factory=".js_additional_data.DefaultUserInfo"
+        provides=".interfaces.IUserInfo"
+        for="*
+             zope.publisher.interfaces.IRequest"
+        />
+
+</configure>

@@ -1,0 +1,203 @@
+=======
+CHANGES
+=======
+
+1.6.7 (unreleased)
+------------------
+
+- Nothing changed yet.
+
+
+1.6.6 (2016-05-19)
+------------------
+
+- Bugfix: Compute new 'content-length'
+  [frapell]
+
+
+1.6.5 (2016-05-18)
+------------------
+
+- FD#1435: If Raven is not defined, just ignore reporting to sentry
+  [frapell]
+
+- Work if resource is gzip encoded
+  [frapell]
+
+
+1.6.4 (2015-07-07)
+------------------
+
+- #474241: Properly register the error_log using GenericSetup so it doesn't
+  get overriden when installing other tools
+  [frapell]
+
+
+1.6.3 (2015-04-07)
+------------------
+
+- Bugfix: If no additional js are specified to ignore, return proper value
+  [frapell]
+
+
+1.6.2 (2015-02-25)
+------------------
+
+- Use full path to .map file so it is always found
+  [frapell]
+
+
+1.6.1 (2015-01-06)
+------------------
+
+- Allow to specify a list of Javascript files to not be wrapped by try;catch
+  [frapell]
+
+
+1.6.0 (2014-12-23)
+------------------
+
+- Include user information when sending error to Sentry
+  [frapell]
+
+- If a `GetSentryDoNotSend` is defined, and set to true, do not send the
+  error to GetSentry.
+  [frapell]
+
+
+1.5.0 (2014-12-19)
+------------------
+
+- If Zope is in debug mode, then do not send error to Senty. Unless env var is
+  set.
+  [frapell]
+
+- Allow to specify public DSN and to enable JS tracking from env variables.
+  [frapell]
+
+- Also wrap merged JS in portal_javascripts
+  [frapell]
+
+
+1.4.5 (2014-12-05)
+------------------
+
+- Wrap resource files
+  [frapell]
+
+
+1.4.4 (2014-12-03)
+------------------
+
+- Ignore LinkIntegrityNotificationException
+  [frapell]
+
+
+1.4.3 (2014-12-02)
+------------------
+
+- Bugfix
+  [frapell]
+
+
+1.4.2 (2014-12-02)
+------------------
+
+- Use getToolByName to get the error_log
+  [frapell]
+
+
+1.4.1 (2014-12-02)
+------------------
+
+- Update documentation
+  [frapell]
+
+
+1.4.0 (2014-12-02)
+------------------
+
+- Allow to send Javascript exceptions to GetSentry
+  [frapell]
+
+- We no longer need version.txt file
+  [frapell]
+
+- Add CheckoutException to _ignored_exceptions
+  [runyaga]
+
+1.3.1 (2013-03-27)
+------------------
+
+ - Display the env DSN on the prefs_error_log_form form.
+   [josh]
+
+
+1.3 (2013-03-20)
+----------------
+
+ - Don't store DSN from environment variable.
+   [josh]
+
+
+1.2 (2012-09-07)
+----------------
+
+ - Update to work with latest raven.
+   [josh]
+
+ - SYSTEMSINTERNAL-962: Customized prefs_error_log_form to allow changing DSN
+   from plone interface.
+   [josh]
+
+ - SYSTEMSINTERNAL-961: Change title for generic setup profile and move items
+   out of www directory.
+   [josh]
+
+
+1.1 (2012-07-22)
+----------------
+
+ - Improved example DSN to look like a real DSN.
+   [josh]
+
+ - If a DSN is configured via the environment variable put it in the DSN field
+   on the config form if DSN has not already been configured through the field.
+   [josh]
+
+ - Increase size of DSN field so that the whole DSN is visible.
+   [josh]
+
+ - SYSTEMSINTERNAL-960: Added Intercepted to ignored exceptions.
+   [josh]
+
+ - INTSUP-96: Clean out old entries from EXC.
+   [josh]
+
+ - INTSUP-96: Use thread local variable instead of _v_ variable to store
+   handler.
+   [josh]
+
+ - INTSUP-96: Added example DSN help text.
+   [josh]
+
+
+1.0 (2012-07-11)
+----------------
+
+ - Clear cached handler when dsn is changed.
+   [josh]
+
+
+0.2 (2012-07-03)
+----------------
+
+ - Add MANIFEST.in
+   [josh]
+
+
+0.1 (2012-07-03)
+----------------
+
+ - Initial Import
+
