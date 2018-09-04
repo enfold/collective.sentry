@@ -1,3 +1,4 @@
+import functools
 import Globals
 import logging
 import os
@@ -7,7 +8,6 @@ try:
 except ImportError:
     from Globals import InitializeClass
 from AccessControl import ClassSecurityInfo
-from Acquisition import aq_base
 from Products.PageTemplates.PageTemplateFile import PageTemplateFile
 from Products.SiteErrorLog.SiteErrorLog import SiteErrorLog
 from Products.SiteErrorLog.SiteErrorLog import use_error_logging
@@ -15,6 +15,10 @@ from datetime import datetime
 from datetime import timedelta
 from collective.sentry.config import SEND_ANYWAY_ENV_VAR
 from collective.sentry.config import DSN_ENV_VAR
+from collective.sentry.config import ENVIRONMENT_ENV_VAR
+from collective.sentry.config import RELEASE_ENV_VAR
+from collective.sentry.config import TRACK_JS_ENV_VAR
+from collective.sentry.config import USER_FEEDBACK_ENV_VAR
 from inspect import currentframe
 from inspect import getinnerframes
 from inspect import getouterframes
@@ -34,6 +38,23 @@ _www = os.path.dirname(__file__)
 handler_store = threading.local()
 
 handler_store.handlers = dict()
+
+
+def get_or_create_handler(dsn):
+    if not hasattr(handler_store, 'handlers'):
+        handler_store.handlers = dict()
+        logger.info('Creating new handlers.')
+    if not dsn.startswith('threaded+'):
+        dsn = 'threaded+' + dsn
+    if dsn not in handler_store.handlers:
+        environment = os.environ.get(ENVIRONMENT_ENV_VAR, '')
+        release = os.environ.get(RELEASE_ENV_VAR, '')
+        handler_store.handlers[dsn] = ZopeSentryHandler(
+            dsn=dsn,
+            environment=environment,
+            release=release)
+        logger.info('Creating new handler for DSN: %s' % dsn)
+    return handler_store.handlers[dsn]
 
 
 class GetSentryErrorLog(SiteErrorLog):
@@ -62,7 +83,6 @@ class GetSentryErrorLog(SiteErrorLog):
             logger.info('Zope is in debug mode. Not sending error to sentry')
             return res
 
-        base = aq_base(self)
         dsn = self.getsentry_dsn
         dsn = dsn and dsn or os.environ.get(DSN_ENV_VAR, '')
         if not dsn:
@@ -70,7 +90,6 @@ class GetSentryErrorLog(SiteErrorLog):
             return res
 
         if res is not None:
-            log = self._getLog()
 
             try:
                 tp = str(getattr(info[0], '__name__', info[0]))
@@ -90,15 +109,8 @@ class GetSentryErrorLog(SiteErrorLog):
 
             EXC[key] = now
             rec = LogRecord('exception', ERROR, '', 1, 'Exception', (), info)
-            if not hasattr(handler_store, 'handlers'):
-                handler_store.handlers = dict()
-                logger.info('Creating new handlers.')
-            if dsn not in handler_store.handlers:
-                if not dsn.startswith('threaded+'):
-                    dsn = 'threaded+' + dsn
-                handler_store.handlers[dsn] = ZopeSentryHandler(dsn=dsn)
-                logger.info('Creating new handler for DSN: %s' % dsn)
-            handler_store.handlers[dsn].emit(rec)
+            handler = get_or_create_handler(dsn)
+            handler.emit(rec)
 
         return res
 
@@ -153,8 +165,8 @@ class ZopeSentryHandler(SentryHandler):
         self.setLevel(level)
 
     def emit(self, record):
+        request = None
         if record.levelno <= logging.ERROR:
-            request = None
             exc_info = None
             for frame_info in getouterframes(currentframe()):
                 frame = frame_info[0]
@@ -206,5 +218,48 @@ class ZopeSentryHandler(SentryHandler):
                 except (AttributeError, KeyError):
                     logger.warning('Could not extract data from request',
                             exc_info=True)
-        return super(ZopeSentryHandler, self).emit(record)
+        emitted = super(ZopeSentryHandler, self).emit(record)
+        track_js = os.environ.get(TRACK_JS_ENV_VAR, 'false')
+        user_feedback = os.environ.get(USER_FEEDBACK_ENV_VAR, 'false')
+        if request and track_js != 'false' and user_feedback != 'false':
+            request.other['SENTRY_ID'] = emitted
+            request.other['SENTRY_DSN'] = self.client.get_public_dsn(scheme='https')
+        return emitted
 
+
+def captureMessage(message, **kwargs):
+    dsn = os.environ.get(DSN_ENV_VAR, '')
+    if dsn:
+        handler = get_or_create_handler(dsn)
+        handler.client.captureMessage(message, **kwargs)
+
+
+def captureBreadcrumb(**kwargs):
+    dsn = os.environ.get(DSN_ENV_VAR, '')
+    if dsn:
+        handler = get_or_create_handler(dsn)
+        handler.client.captureBreadcrumb(**kwargs)
+
+
+def breadcrumb(message, category, level='info', include_result=False):
+
+    def decorator_breadcrumb(func):
+
+        @functools.wraps(func)
+        def wrapper_breadcrumb(*args, **kwargs):
+            value = func(*args, **kwargs)
+            dsn = os.environ.get(DSN_ENV_VAR, '')
+            if dsn:
+                data = {'args': args, 'kwargs': kwargs}
+                if include_result:
+                    data['result'] = value
+                handler = get_or_create_handler(dsn)
+                handler.client.captureBreadcrumb(
+                    message=message,
+                    category=category,
+                    level=level,
+                    data=data)
+            return value
+
+        return wrapper_breadcrumb
+    return decorator_breadcrumb

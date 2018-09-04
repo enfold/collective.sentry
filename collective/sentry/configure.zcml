@@ -17,15 +17,7 @@
 
     <browser:page
         for="*"
-        name="js_control"
-        class=".track_js.Control"
-        permission="zope2.View"
-        allowed_attributes="should_track_js"
-        />
-
-    <browser:page
-        for="*"
-        name="sentry.config.js"
+        name="sentry-config.js"
         class=".track_js.SentryConfig"
         permission="zope2.View"
         />

@@ -1,13 +1,20 @@
 <?xml version="1.0"?>
 <registry>
 
-  <records prefix="plone.bundles/collective-sentry"
-            interface='Products.CMFPlone.interfaces.IBundleRegistry'>
+  <records prefix="plone.bundles/collective-sentry-ravenjs"
+           interface='Products.CMFPlone.interfaces.IBundleRegistry'>
     <value key="enabled">True</value>
-    <value key="jscompilation">sentry.config.js</value>
-    <value key="last_compilation">2015-11-11 00:00:00</value>
+    <value key="jscompilation">++resource++collective.sentry/js/raven.js</value>
     <value key="compile">False</value>
     <value key="depends">plone</value>
+  </records>
+
+  <records prefix="plone.bundles/collective-sentry"
+           interface='Products.CMFPlone.interfaces.IBundleRegistry'>
+    <value key="enabled">True</value>
+    <value key="jscompilation">sentry-config.js</value>
+    <value key="compile">False</value>
+    <value key="depends">collective-sentry-ravenjs</value>
   </records>
 
 </registry>

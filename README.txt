@@ -22,11 +22,90 @@ DSN Configuration
 -----------------
 
 In order for getsentry logging to work you must first creata an account on and
-obtain a DSN from getsentry.com.  Once you have obtained a DSN you can either
+obtain a DSN from sentry.io.  Once you have obtained a DSN you can either
 set the environment variable GETSENTRY_DSN to your DSN or configure the DSN on
 the error_log from the ZMI after installing the package from the quick
 installer.  If set the GETSENTRY_DSN environment variable will be used if the
 DSN isn't configured directly on the error_log.
+
+NOTE that setting the DSN in the error log ony works for logging
+errors. If you need to use the advanced features of this package, it's
+necessary to use the environment variables for now.
+
+Environments
+------------
+
+Sentry supports grouping error reports by environment. Collective.sentry
+will set the appropriate parameter in the error report to the specified
+environment if the GETSENTRY_ENVIRONMENT variable is set:
+
+environment-vars =
+    GETSENTRY_ENVIRONMENT Staging
+
+Releases
+--------
+
+Sentry also supports release tracking. Collective.sentry will set the
+appropriate parameter if the GETSENTRY_RELEASE variable is set:
+
+environment-vars =
+    GETSENTRY_RELEASE 2.0a
+
+The best identifier to use for a release is a git commit id, since Sentry
+projects can connect to repositories and show release information. More
+information about that is in the Sentry documentation.
+
+Breadcrumbs
+-----------
+
+Breadcrumbs are a trail of events which happened prior to an error report.
+Sentry automatically captures many Zope/Plone breadcrumbs, but an
+application could leave more specific breadcrumbs for ease of debugging.
+
+Collective.sentry includes a @breadcrumb decorator which can be used to
+easily leave breadcrumbs. Any function or method decorated in this way
+will leave a breadcrumb. Example:
+
+from collective.sentry.error_log import breadcrumb
+
+@breadcrumb(message='Dangerous method',
+            category='MyApp',
+            level='Warning',
+            include_result=False)
+def dangerous(self):
+    ...
+
+The only parameter that requires explanation is include_result. If True,
+the result of the function will be included in the breadcrumb data. The
+default is False, to avoid cluttering the log with unneeded information.
+
+Sometimes, you might want to include very specific information in a
+breadcrumb. In that case, you can use captureBreadcrumb:
+
+from collective.sentry.error_log import captureBreadcrumb
+
+def very_specific_function():
+    # do something
+    data = ...
+    captureBreadcrumb(message='Very specific message',
+                      category='Category X',
+                      data=data)
+
+Sending custom events
+---------------------
+
+Collective.sentry allows sending custom events to Sentry. This can be
+useful when there is no exception raised, but there is a condition that
+should not be reached. Use captureMessage for this:
+
+from collective.sentry.error_log import captureMessage
+
+def unhealthy_condition():
+    if condition:
+        captureMessage('We should not be here at all', extra={'user', 'joe'})
+
+Include any additional information that should show up in the error report
+using the extra parameter.
 
 Sending Notifications from collective.celery Tasks
 --------------------------------------------------
@@ -41,13 +120,13 @@ variable is REQUIRED.
 Javascript
 ----------
 
-GetSentry also supports reporting Javascript errors, and collective.sentry
+Sentry also supports reporting Javascript errors, and collective.sentry
 provides support for this as well.
 Just go to the error_log control panel (or ZMI), enable the checkbox for
 "Track Javascript Errors", and that's it, collective.sentry
 will handle the rest.
 In order to get the most out of the Javascript report, you can use Sourcemaps[0]
-with your Javascript files, since GetSentry supports them[1]
+with your Javascript files, since Sentry supports them[1]
 Also, if the checkbox for JS tracking is not enabled, you can set the
 GETSENTRY_TRACK_JS environment variable in order to enable JS tracking.
 
@@ -62,49 +141,54 @@ will need to register an adapter implementing the
 is to provide a method `get_user_data` that should return a dict structure
 with `{'id': user_id_in_system, 'email': user_email}`.
 
-Filter what to send
+Filter Javascript errors
+++++++++++++++++++++++++
+
+Collective.sentry can filter errors that are not caused by your
+applications, or errors that you want to ignore for other reasons. If you
+set the 'GETSENTRY_JS_ERRORS_TO_IGNORE' to a comma-separated list of
+regex patterns or strings, any matching errors will not be reported.
+
+Example (in buildout.cfg):
+
+environment-vars =
+    GETSENTRY_JS_ERRORS_TO_IGNORE /^Exact Error Match$/, /error_fragment/
+
+Ignore certain urls
 +++++++++++++++++++
 
-Sometimes, visitors will get to your site using very old, unsupported browsers.
-You don't want them to spam your GetSentry stream with errors from them.
-For this, you can define a `GetSentryDoNotSend` global variable in your
-Javascript. If this variable is declared, and set to `true`, errors will not
-be sent to GetSentry.
+It is possible to ignore urls and report only errors that do not match an
+url pattern. Use the GETSENTRY_JS_TO_IGNORE environment variable for this.
 
-Ignore certain files
-++++++++++++++++++++
+environment-vars =
+    GETSENTRY_JS_TO_IGNORE /sentry\.io/, 'http://mysite.com/script.js'
 
-Javascript tracking works by wrapping the code in a big `try` block. If any
-error happens, it will be sent to GetSentry when it is catched.
-You can provide a list of files to not be wrapped with this block by setting the
-GETSENTRY_JS_TO_IGNORE environment variable.
+Alternatively, there are cases where you would only want to collect
+Javascript errors coming from specific urls. To do this, set the
+GETSENTRY_JS_TO_ALLOW variable:
 
-Implementation is very naive at the moment, and it will only check if the string
-is in the url. For example, providing:
+environment-vars =
+    GETSENTRY_JS_TO_ALLOW /important_js/, 'http://mysite.com/app.js'
 
-'getsentry.js'
+User Feedback support
+---------------------
 
-will match 'http://www.host.com/js/getsentry.js' but not
-'http://www.host.com/js/getsentry-cachekey.js'
+Sentry allows users to be presented with a dialog box for sending error
+feedback when an error page is shown. The feedback is added to the sentry
+report. In collective.sentry, you can enable user feedback when the
+GETSENTRY_USER_FEEDBACK variable is set to true. Because sentry uses the
+Raven Javascript client to show the dialog, you must also have the
+GETSENTRY_TRACK_JS variable set to true for this to work:
 
-However providing:
-
-'getsentry'
-
-will match 'http://www.host.com/js/getsentry.js' and also
-'http://www.host.com/js/getsentry-cachekey.js' as well.
-
-NOTE: Be careful because this will match the string appearing *anywhere* in the
-url.
-
-Several strings can be provided, separated by a semi-colon (;)
-
+environment-vars =
+    GETSENTRY_TRACK_JS true
+    GETSENTRY_USER_FEEDBACK true
 
 Debug Mode
 ----------
 
 When developing a site, or when starting a debug instance to fix an issue, you
-usually don't want to pollute GetSentry Stream with errors caused by debugging.
+usually don't want to pollute Sentry Stream with errors caused by debugging.
 collective.sentry will not send errors to sentry if the instance is in
 debug mode.
 If you want to send errors anyway, you can set the GETSENTRY_ALWAYS_SEND
@@ -113,7 +197,7 @@ environment variable, to ignore this condition and send the errors anyway.
 Notes
 -----
 
-After an exception event is sent to getsentry.com the error log will not send
+After an exception event is sent to sentry.io the error log will not send
 another exception event of the same type from the same error log if the new
 exception occurs within 3 minutes of the first exception.
 
