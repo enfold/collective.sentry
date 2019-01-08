@@ -6,6 +6,14 @@ Installation
 - Use the quick installer to install collective.sentry.
 - Configure the getsentry DSN to enable getsentry logging.
 
+Upgrade steps
+-------------
+
+If you are running a previous version of collective.sentry, please make
+sure that you have the latest version installed in the Plone add-ons control
+panel. If you see a version update required at the top of the add-ons page,
+be sure to click on the update button, or Javascript tracking will not work.
+
 Buildout Configuration Example
 ------------------------------
 

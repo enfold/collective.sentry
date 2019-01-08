@@ -2,10 +2,10 @@
 CHANGES
 =======
 
-1.6.7 (unreleased)
+2.0.0 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Prevent error if sentry id is not in request.
 
 
 1.6.6 (2016-05-19)
