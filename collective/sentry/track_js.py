@@ -66,10 +66,10 @@ class SentryConfig(BrowserView):
                                     release,
                                     user_data)
         elif dsn and not track:
-            logger.info(
+            logger.debug(
                 'JS tracking not enabled. Not sending JS errors to sentry')
         else:
-            logger.info("There is no GetSentry DSN set. Not "
+            logger.debug("There is no GetSentry DSN set. Not "
                         "configuring Sentry for JS")
 
         self.request.response.setHeader('Content-Type',

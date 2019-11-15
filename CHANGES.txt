@@ -7,6 +7,9 @@ CHANGES
 
 - Prevent error if sentry id is not in request.
 
+- Cut down on excessive logging.
+  [enfold-josh]
+
 
 1.6.6 (2016-05-19)
 ------------------
