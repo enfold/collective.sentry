@@ -189,14 +189,15 @@ class ZopeSentryHandler(SentryHandler):
             if request:
                 try:
                     body_pos = request.stdin.tell()
-                    request.stdin.seek(0)
-                    body = request.stdin.read()
-                    request.stdin.seek(body_pos)
+                    # request.stdin.seek(0)
+                    # body = request.stdin.read()
+                    # request.stdin.seek(body_pos)
                     http = dict(headers=request.environ,
                                 url=request.getURL(),
                                 method=request.method,
-                                host=request.environ.get('REMOTE_ADDR',
-                                ''), data=body)
+                                host=request.environ.get('REMOTE_ADDR',''),
+                                )
+                                # data=body)
                     if 'HTTP_USER_AGENT' in http['headers']:
                         if 'User-Agent' not in http['headers']:
                             http['headers']['User-Agent'] = \

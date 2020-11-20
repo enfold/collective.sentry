@@ -10,6 +10,9 @@ CHANGES
 - Cut down on excessive logging.
   [enfold-josh]
 
+- Don't send request body to sentry.
+  [enfold-josh]
+
 
 1.6.6 (2016-05-19)
 ------------------
