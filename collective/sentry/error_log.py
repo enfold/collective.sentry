@@ -1,13 +1,10 @@
 import functools
-import Globals
 import logging
 import os
 import threading
-try:
-    from AccessControl.class_init import InitializeClass
-except ImportError:
-    from Globals import InitializeClass
+from AccessControl.class_init import InitializeClass
 from AccessControl import ClassSecurityInfo
+from App.config import getConfiguration
 from Products.PageTemplates.PageTemplateFile import PageTemplateFile
 from Products.SiteErrorLog.SiteErrorLog import SiteErrorLog
 from Products.SiteErrorLog.SiteErrorLog import use_error_logging
@@ -78,7 +75,7 @@ class GetSentryErrorLog(SiteErrorLog):
         """ Log an exception and send the info to getsentry """
         res = SiteErrorLog.raising(self, info)
         send_anyway = os.environ.get(SEND_ANYWAY_ENV_VAR, '')
-        if Globals.DevelopmentMode and not send_anyway:
+        if getConfiguration().debug_mode and not send_anyway:
             # We are in debug mode, do not send tb to Sentry
             logger.info('Zope is in debug mode. Not sending error to sentry')
             return res

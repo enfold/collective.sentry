@@ -5,6 +5,8 @@ CHANGES
 2.0.0 (unreleased)
 ------------------
 
+- Add compatibility with Plone 5.2, Python 3.5-3.8
+
 - Prevent error if sentry id is not in request.
 
 - Cut down on excessive logging.

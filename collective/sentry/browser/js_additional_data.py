@@ -1,9 +1,9 @@
 from collective.sentry.browser.interfaces import IUserInfo
-from zope.interface import implements
+from zope.interface import implementer
 
 
+@implementer(IUserInfo)
 class DefaultUserInfo(object):
-    implements(IUserInfo)
 
     def __init__(self, context, request):
         self.context = context

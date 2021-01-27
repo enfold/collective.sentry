@@ -1,6 +1,6 @@
-import Globals
 import logging
 import os
+from App.config import getConfiguration
 from collective.sentry.browser.interfaces import IUserInfo
 from collective.sentry.config import ALLOWED_JS
 from collective.sentry.config import IGNORED_JS
@@ -50,7 +50,7 @@ class SentryConfig(BrowserView):
             if not track:
                 track = bool(os.environ.get(TRACK_JS_ENV_VAR, False))
             send_anyway = os.environ.get(SEND_ANYWAY_ENV_VAR, '')
-            if track and Globals.DevelopmentMode and not send_anyway:
+            if track and getConfiguration().debug_mode and not send_anyway:
                 track = False
                 logger.info(
                     'Zope is in debug mode. Not sending JS errors to sentry')
