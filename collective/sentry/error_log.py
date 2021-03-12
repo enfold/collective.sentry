@@ -1,5 +1,6 @@
 import functools
 import logging
+import six
 import os
 import threading
 from AccessControl.class_init import InitializeClass
@@ -125,14 +126,22 @@ class GetSentryErrorLog(SiteErrorLog):
                       track_js=0, RESPONSE=None):
         """Sets the properties of this site error log.
         """
+
         getsentry_dsn = getsentry_dsn.strip()
         if getsentry_dsn != self.getsentry_dsn:
             self.getsentry_dsn = getsentry_dsn
 
         self.track_js = bool(track_js)
+        exceptions = list()
+        for entry in ignored_exceptions:
+            if entry:
+                value = entry
+                if not isinstance(value, six.text_type):
+                    value = value.decode('utf-8')
+                exceptions.append(value)
 
-        SiteErrorLog.setProperties(self,keep_entries,copy_to_zlog,
-                ignored_exceptions,RESPONSE)
+        SiteErrorLog.setProperties(self, keep_entries, copy_to_zlog,
+                                   exceptions, RESPONSE)
 
 InitializeClass(GetSentryErrorLog)
 

@@ -35,6 +35,7 @@ setup(name='collective.sentry',
           'setuptools',
           # -*- Extra requirements: -*-
           'raven>=6.8.0',
+          'six',
       ],
       extras_require={
           "test": [
