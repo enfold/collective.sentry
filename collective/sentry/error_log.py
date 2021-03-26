@@ -96,7 +96,7 @@ class GetSentryErrorLog(SiteErrorLog):
 
             now = datetime.now()
             # Clean out EXC dict of old entries
-            for k in EXC.keys():
+            for k in list(EXC.keys()):
                 if (now - EXC[k]) > TIMEOUT:
                     del EXC[k]
             key = '%s:%s' % ('/'.join(self.getPhysicalPath()),tp)
