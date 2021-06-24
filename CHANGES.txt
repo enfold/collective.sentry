@@ -2,7 +2,7 @@
 CHANGES
 =======
 
-2.0.0 (unreleased)
+2.0.0 (2021-06-24)
 ------------------
 
 - Add compatibility with Plone 5.2, Python 3.5-3.8
