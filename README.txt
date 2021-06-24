@@ -88,16 +88,16 @@ the result of the function will be included in the breadcrumb data. The
 default is False, to avoid cluttering the log with unneeded information.
 
 Sometimes, you might want to include very specific information in a
-breadcrumb. In that case, you can use captureBreadcrumb:
+breadcrumb. In that case, you can use captureBreadcrumb::
 
-from collective.sentry.error_log import captureBreadcrumb
+  from collective.sentry.error_log import captureBreadcrumb
 
-def very_specific_function():
-    # do something
-    data = ...
-    captureBreadcrumb(message='Very specific message',
-                      category='Category X',
-                      data=data)
+  def very_specific_function():
+      # do something
+      data = ...
+      captureBreadcrumb(message='Very specific message',
+                        category='Category X',
+                        data=data)
 
 Sending custom events
 ---------------------
