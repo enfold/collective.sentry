@@ -6,7 +6,7 @@ def read(*rnames):
 
 
 setup(name='collective.sentry',
-      version='2.0.1.dev0',
+      version='2.1.0.dev0',
       description="Replace default Plone error_log to send data to GetSentry service",
       long_description=read('README.txt') + '\n',
       classifiers=[
@@ -35,13 +35,17 @@ setup(name='collective.sentry',
       install_requires=[
           'setuptools',
           # -*- Extra requirements: -*-
-          'raven>=6.8.0',
+          'sentry-sdk==1.3.0',
           'six',
       ],
       extras_require={
           "test": [
-              "Plone",
-              "plone.app.testing",
+              'cssselect',
+              'lxml',
+              'mock',
+              'plone.api >=1.8.5',
+              'plone.app.robotframework',
+              'plone.app.testing [robot]',
               ],
       },
       entry_points="""

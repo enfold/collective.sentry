@@ -2,57 +2,147 @@ import functools
 import logging
 import six
 import os
-import threading
 from AccessControl.class_init import InitializeClass
 from AccessControl import ClassSecurityInfo
+from AccessControl.users import nobody
+from AccessControl.SecurityManagement import getSecurityManager
 from App.config import getConfiguration
 from Products.PageTemplates.PageTemplateFile import PageTemplateFile
 from Products.SiteErrorLog.SiteErrorLog import SiteErrorLog
 from Products.SiteErrorLog.SiteErrorLog import use_error_logging
-from datetime import datetime
-from datetime import timedelta
 from collective.sentry.config import SEND_ANYWAY_ENV_VAR
 from collective.sentry.config import DSN_ENV_VAR
 from collective.sentry.config import ENVIRONMENT_ENV_VAR
 from collective.sentry.config import RELEASE_ENV_VAR
 from collective.sentry.config import TRACK_JS_ENV_VAR
 from collective.sentry.config import USER_FEEDBACK_ENV_VAR
-from inspect import currentframe
-from inspect import getinnerframes
-from inspect import getouterframes
-from logging import ERROR
-from logging import LogRecord
-from raven.handlers.logging import SentryHandler
-from raven.utils.stacks import iter_stack_frames
+from sentry_sdk.hub import Hub
+from sentry_sdk.integrations.logging import LoggingIntegration
+from sentry_sdk.utils import event_from_exception
+from zope.globalrequest import getRequest
+from ZPublisher.HTTPRequest import _filterPasswordFields
+from plone import api
+import sentry_sdk
+import sys
 
 
 logger = logging.getLogger('collective.sentry')
 
-EXC = {}
-TIMEOUT = timedelta(minutes=3)
-
 _www = os.path.dirname(__file__)
 
-handler_store = threading.local()
 
-handler_store.handlers = dict()
+def get_or_create_client(dsn):
+    if Hub.current.client:
+        if Hub.current.client.dsn == dsn:
+            return Hub.current.client
+
+    environment = os.environ.get(ENVIRONMENT_ENV_VAR, '')
+    release = os.environ.get(RELEASE_ENV_VAR, '')
+    client = sentry_sdk.client.Client(
+        dsn,
+        max_breadcrumbs=50,
+        debug=False,
+        environment=environment,
+        release=release,
+        integrations=[LoggingIntegration(
+            level=None,
+            event_level=None
+        )])
+    Hub.current.bind_client(client)
+    return client
 
 
-def get_or_create_handler(dsn):
-    if not hasattr(handler_store, 'handlers'):
-        handler_store.handlers = dict()
-        logger.info('Creating new handlers.')
-    if not dsn.startswith('threaded+'):
-        dsn = 'threaded+' + dsn
-    if dsn not in handler_store.handlers:
-        environment = os.environ.get(ENVIRONMENT_ENV_VAR, '')
-        release = os.environ.get(RELEASE_ENV_VAR, '')
-        handler_store.handlers[dsn] = ZopeSentryHandler(
-            dsn=dsn,
-            environment=environment,
-            release=release)
-        logger.info('Creating new handler for DSN: %s' % dsn)
-    return handler_store.handlers[dsn]
+def _get_user_from_request(request):
+    user = request.get("AUTHENTICATED_USER", None)
+
+    if user is None:
+        user = getSecurityManager().getUser()
+
+    if user is not None and user != nobody:
+        user_dict = {
+            "id": user.getId(),
+            "email": user.getProperty("email") or "",
+        }
+    else:
+        user_dict = {}
+
+    return user_dict
+
+
+def _get_other_from_request(request):
+    other = dict()
+    for k, v in _filterPasswordFields(request.other.items()):
+        if k in ("PARENTS", "RESPONSE"):
+            continue
+        other[k] = repr(v)
+    return other
+
+
+def _get_lazyitems_from_request(request):
+    lazy_items = dict()
+    for k, v in _filterPasswordFields(request._lazies.items()):
+        lazy_items[k] = repr(v)
+    return lazy_items
+
+
+def _get_cookies_from_request(request):
+    cookies = dict()
+    for k, v in _filterPasswordFields(request.cookies.items()):
+        if k == '__ac':
+            continue
+        cookies[k] = repr(v)
+    return cookies
+
+
+def _get_form_from_request(request):
+    form = dict()
+    for k, v in _filterPasswordFields(request.form.items()):
+        form[k] = repr(v)
+    return form
+
+
+def _get_headers_from_request(request):
+    # ensure that all header key-value pairs are strings
+    headers = dict()
+    for k, v in request.environ.items():
+        if not isinstance(v, str):
+            v = str(v)
+        if k == "HTTP_USER_AGENT":
+            k = "User-Agent"
+        elif k == "QUERY_STRING":
+            k = "query_string"
+        headers[k] = v
+
+    return headers
+
+
+def _set_tags_from_request(scope, request):
+    configuration = getConfiguration()
+    tags = dict()
+    instancehome = configuration.instancehome
+    tags["instance_name"] = instancehome.rsplit(os.path.sep, 1)[-1]
+    tags["url"] = request.get("ACTUAL_URL")
+
+    for k, v in tags.items():
+        scope.set_tag(k, v)
+
+
+def _prepare_scope_and_event(request, scope, event=None):
+    scope.set_context("other", _get_other_from_request(request))
+    scope.set_context("lazy items", _get_lazyitems_from_request(request))
+    scope.set_context("cookies", _get_cookies_from_request(request))
+    scope.set_context("form", _get_form_from_request(request))
+    scope.set_context("headers", _get_headers_from_request(request))
+    user_info = _get_user_from_request(request)
+    scope.set_context("user", user_info)
+    if user_info and "id" in user_info:
+        scope.user = user_info
+
+    _set_tags_from_request(scope, request)
+
+    if event:
+        # # XXX: Force the user-agent into the event, so it gets picked up later.
+        event['request'] = {"headers": {'user-agent': request.get("HTTP_USER_AGENT")}}
 
 
 class GetSentryErrorLog(SiteErrorLog):
@@ -73,7 +163,8 @@ class GetSentryErrorLog(SiteErrorLog):
 
     security.declarePrivate('raising')
     def raising(self, info):
-        """ Log an exception and send the info to getsentry """
+        """ Log an exception and send the info to sentry """
+        exc_info = sys.exc_info()
         res = SiteErrorLog.raising(self, info)
         send_anyway = os.environ.get(SEND_ANYWAY_ENV_VAR, '')
         if getConfiguration().debug_mode and not send_anyway:
@@ -84,31 +175,23 @@ class GetSentryErrorLog(SiteErrorLog):
         dsn = self.getsentry_dsn
         dsn = dsn and dsn or os.environ.get(DSN_ENV_VAR, '')
         if not dsn:
-            logger.warn('Missing DSN. Unable to send errors to getsentry')
+            logger.warning('Missing DSN. Unable to send errors to sentry')
             return res
 
         if res is not None:
+            client = get_or_create_client(dsn)
+            event, hint = event_from_exception(exc_info, client_options=client.options)
+            hub = Hub.current
+            hub.start_session()
 
-            try:
-                tp = str(getattr(info[0], '__name__', info[0]))
-            except Exception:
-                return res
+            with sentry_sdk.push_scope() as scope:
+                request = getattr(self, 'REQUEST', None)
+                if not request:
+                    request = getRequest()
 
-            now = datetime.now()
-            # Clean out EXC dict of old entries
-            for k in list(EXC.keys()):
-                if (now - EXC[k]) > TIMEOUT:
-                    del EXC[k]
-            key = '%s:%s' % ('/'.join(self.getPhysicalPath()),tp)
-            if key in EXC:
-                # We just cleaned out old entries so if key is still in there
-                # it is ok to just return without checking against TIMEOUT
-                return res
-
-            EXC[key] = now
-            rec = LogRecord('exception', ERROR, '', 1, 'Exception', (), info)
-            handler = get_or_create_handler(dsn)
-            handler.emit(rec)
+                _prepare_scope_and_event(request, scope, event)
+                sentry_sdk.capture_event(event, hint, scope)
+            hub.end_session()
 
         return res
 
@@ -155,97 +238,33 @@ def manage_addErrorLog(dispatcher, RESPONSE=None):
             '/manage_main?manage_tabs_message=GetSentry+Error+Log+Added.' )
 
 
-
-class ZopeSentryHandler(SentryHandler):
-    '''
-    Zope unfortunately eats the stack trace information.
-    To get the stack trace information and other useful information
-    from the request object, this class looks into the different stack
-    frames when the emit method is invoked.
-    '''
-
-    def __init__(self, *args, **kw):
-        kw['capture_locals'] = False
-        super(ZopeSentryHandler, self).__init__(*args, **kw)
-        level = kw.get('level', logging.ERROR)
-        self.setLevel(level)
-
-    def emit(self, record):
-        request = None
-        if record.levelno <= logging.ERROR:
-            exc_info = None
-            for frame_info in getouterframes(currentframe()):
-                frame = frame_info[0]
-                if not request:
-                    request = frame.f_locals.get('request', None)
-                    if not request:
-                        view = frame.f_locals.get('self', None)
-                        request = getattr(view, 'request', None)
-                if not exc_info:
-                    exc_info = frame.f_locals.get('exc_info', None)
-                    if not hasattr(exc_info, '__getitem__'):
-                        exc_info = None
-                if request and exc_info:
-                    break
-
-            if exc_info:
-                record.exc_info = exc_info
-                record.stack = \
-                    iter_stack_frames(getinnerframes(exc_info[2]))
-            if request:
-                try:
-                    body_pos = request.stdin.tell()
-                    # request.stdin.seek(0)
-                    # body = request.stdin.read()
-                    # request.stdin.seek(body_pos)
-                    http = dict(headers=request.environ,
-                                url=request.getURL(),
-                                method=request.method,
-                                host=request.environ.get('REMOTE_ADDR',''),
-                                )
-                                # data=body)
-                    if 'HTTP_USER_AGENT' in http['headers']:
-                        if 'User-Agent' not in http['headers']:
-                            http['headers']['User-Agent'] = \
-                                http['headers']['HTTP_USER_AGENT']
-                    if 'QUERY_STRING' in http['headers']:
-                        http['query_string'] = http['headers'
-                                ]['QUERY_STRING']
-                    setattr(record, 'sentry.interfaces.Http', http)
-                    user = request.get('AUTHENTICATED_USER', None)
-                    if user is not None:
-                        user_dict = dict(id=user.getId(),
-                                is_authenticated=user.has_role('Authenticated'
-                                ), email=user.getProperty('email'))
-                    else:
-                        user_dict = dict(id='Anonymous User',
-                                is_authenticated=False,
-                                email='')
-                    setattr(record, 'sentry.interfaces.User', user_dict)
-                except (AttributeError, KeyError):
-                    logger.warning('Could not extract data from request',
-                            exc_info=True)
-        emitted = super(ZopeSentryHandler, self).emit(record)
-        track_js = os.environ.get(TRACK_JS_ENV_VAR, 'false')
-        user_feedback = os.environ.get(USER_FEEDBACK_ENV_VAR, 'false')
-        if request and track_js != 'false' and user_feedback != 'false':
-            request.other['SENTRY_ID'] = emitted
-            request.other['SENTRY_DSN'] = self.client.get_public_dsn(scheme='https')
-        return emitted
-
-
 def captureMessage(message, **kwargs):
-    dsn = os.environ.get(DSN_ENV_VAR, '')
+    site = api.portal.get()
+    dsn = site.error_log.getsentry_dsn
+    dsn = dsn and dsn or os.environ.get(DSN_ENV_VAR, '')
     if dsn:
-        handler = get_or_create_handler(dsn)
-        handler.client.captureMessage(message, **kwargs)
+        client = get_or_create_client(dsn)
+        if client:
+            with sentry_sdk.push_scope() as scope:
+                request = getattr(site, 'REQUEST', None)
+                if not request:
+                    request = getRequest()
+
+                _prepare_scope_and_event(request, scope)
+                if kwargs:
+                    for k,v in kwargs.items():
+                        scope.set_extra(k,v)
+                sentry_sdk.capture_message(message)
 
 
 def captureBreadcrumb(**kwargs):
-    dsn = os.environ.get(DSN_ENV_VAR, '')
+    site = api.portal.get()
+    dsn = site.error_log.getsentry_dsn
+    dsn = dsn and dsn or os.environ.get(DSN_ENV_VAR, '')
     if dsn:
-        handler = get_or_create_handler(dsn)
-        handler.client.captureBreadcrumb(**kwargs)
+        client = get_or_create_client(dsn)
+        if client:
+            sentry_sdk.add_breadcrumb(**kwargs)
 
 
 def breadcrumb(message, category, level='info', include_result=False):
@@ -255,17 +274,23 @@ def breadcrumb(message, category, level='info', include_result=False):
         @functools.wraps(func)
         def wrapper_breadcrumb(*args, **kwargs):
             value = func(*args, **kwargs)
-            dsn = os.environ.get(DSN_ENV_VAR, '')
+
+            site = api.portal.get()
+            dsn = site.error_log.getsentry_dsn
+            dsn = dsn and dsn or os.environ.get(DSN_ENV_VAR, '')
             if dsn:
-                data = {'args': args, 'kwargs': kwargs}
-                if include_result:
-                    data['result'] = value
-                handler = get_or_create_handler(dsn)
-                handler.client.captureBreadcrumb(
-                    message=message,
-                    category=category,
-                    level=level,
-                    data=data)
+                client = get_or_create_client(dsn)
+                if client:
+                    data = {'args': args, 'kwargs': kwargs}
+                    if include_result:
+                        data['result'] = value
+
+                    sentry_sdk.add_breadcrumb(
+                        message=message,
+                        category=category,
+                        level=level,
+                        data=data)
+
             return value
 
         return wrapper_breadcrumb
