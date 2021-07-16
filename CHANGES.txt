@@ -5,6 +5,9 @@ CHANGES
 2.0.1 (unreleased)
 ------------------
 
+- Restore support for Plone 4
+  [frapell]
+
 - Replace raven with newer sentry-sdk
   [frapell]
 

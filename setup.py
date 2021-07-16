@@ -37,6 +37,7 @@ setup(name='collective.sentry',
           # -*- Extra requirements: -*-
           'sentry-sdk==1.3.0',
           'six',
+          'plone.api',
       ],
       extras_require={
           "test": [
