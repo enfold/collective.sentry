@@ -12,7 +12,7 @@
 
     <genericsetup:registerProfile
         name="plone4"
-        title="enfold.getsentrylog: Plone 4 only profile"
+        title="collective.sentry: Plone 4 only profile"
         directory="profiles/plone4"
         description='Profile intended only in Plone 4 (No need to manually run it, default install profile should do it).'
         provides="Products.GenericSetup.interfaces.EXTENSION"
@@ -20,7 +20,7 @@
 
     <genericsetup:registerProfile
         name="plone5"
-        title="enfold.getsentrylog: Plone 5 only profile"
+        title="collective.sentry: Plone 5 only profile"
         directory="profiles/plone5"
         description='Profile intended only in Plone 5 (No need to manually run it, default install profile should do it).'
         provides="Products.GenericSetup.interfaces.EXTENSION"
