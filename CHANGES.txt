@@ -5,7 +5,8 @@ CHANGES
 2.0.1 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Replace raven with newer sentry-sdk
+  [frapell]
 
 
 2.0.0 (2021-06-24)
