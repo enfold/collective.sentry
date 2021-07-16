@@ -2,6 +2,6 @@ recursive-include collective *
 include *.txt
 include MANIFEST.in
 include *.py
-include buildout.cfg
+include *.cfg
 include tox.ini
 global-exclude *pyc
