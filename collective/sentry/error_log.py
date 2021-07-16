@@ -36,7 +36,7 @@ def get_or_create_client(dsn):
         if Hub.current.client.dsn == dsn:
             return Hub.current.client
 
-    environment = os.environ.get(ENVIRONMENT_ENV_VAR, '')
+    environment = os.environ.get(ENVIRONMENT_ENV_VAR, None)
     release = os.environ.get(RELEASE_ENV_VAR, '')
     client = sentry_sdk.client.Client(
         dsn,

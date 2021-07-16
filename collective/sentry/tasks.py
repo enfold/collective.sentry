@@ -7,7 +7,7 @@ import os
 
 logger = get_task_logger(__name__)
 
-environment = os.environ.get(ENVIRONMENT_ENV_VAR, '')
+environment = os.environ.get(ENVIRONMENT_ENV_VAR, None)
 release = os.environ.get(RELEASE_ENV_VAR, '')
 
 
