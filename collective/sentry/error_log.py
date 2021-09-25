@@ -37,7 +37,7 @@ def get_or_create_client(dsn):
             return Hub.current.client
 
     environment = os.environ.get(ENVIRONMENT_ENV_VAR, None)
-    release = os.environ.get(RELEASE_ENV_VAR, '')
+    release = os.environ.get(RELEASE_ENV_VAR, None)
     client = sentry_sdk.client.Client(
         dsn,
         max_breadcrumbs=50,
