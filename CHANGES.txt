@@ -5,6 +5,9 @@ CHANGES
 2.1.2 (unreleased)
 ------------------
 
+- Allow to use the captureMessage function without having a site or request
+  [frapell]
+
 - If RELEASE is not set, do not send to Sentry
   [frapell]
 

@@ -239,18 +239,24 @@ def manage_addErrorLog(dispatcher, RESPONSE=None):
 
 
 def captureMessage(message, **kwargs):
-    site = api.portal.get()
-    dsn = site.error_log.getsentry_dsn
+    site = None
+    try:
+        site = api.portal.get()
+        dsn = site.error_log.getsentry_dsn
+    except api.exc.CannotGetPortalError:
+        dsn = None
+
     dsn = dsn and dsn or os.environ.get(DSN_ENV_VAR, '')
     if dsn:
         client = get_or_create_client(dsn)
         if client:
             with sentry_sdk.push_scope() as scope:
-                request = getattr(site, 'REQUEST', None)
-                if not request:
-                    request = getRequest()
-
-                _prepare_scope_and_event(request, scope)
+                if site:
+                    request = getattr(site, 'REQUEST', None)
+                    if not request:
+                        request = getRequest()
+                    if request:
+                        _prepare_scope_and_event(request, scope)
                 if kwargs:
                     for k,v in kwargs.items():
                         scope.set_extra(k,v)
