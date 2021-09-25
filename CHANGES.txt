@@ -2,7 +2,7 @@
 CHANGES
 =======
 
-2.1.2 (unreleased)
+2.2.0 (2021-09-25)
 ------------------
 
 - Allow to use the captureMessage function without having a site or request

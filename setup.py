@@ -6,7 +6,7 @@ def read(*rnames):
 
 
 setup(name='collective.sentry',
-      version='2.2.0.dev0',
+      version='2.2.0',
       description="Replace default Plone error_log to send data to GetSentry service",
       long_description=read('README.txt') + '\n',
       classifiers=[
