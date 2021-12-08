@@ -59,9 +59,15 @@ def _get_user_from_request(request):
         user = getSecurityManager().getUser()
 
     if user is not None and user != nobody:
+        try:
+            email = user.getProperty("email")
+        except AttributeError:
+            # When using an unrestricted user from an instance script
+            email = ""
+
         user_dict = {
             "id": user.getId(),
-            "email": user.getProperty("email") or "",
+            "email": email,
         }
     else:
         user_dict = {}
