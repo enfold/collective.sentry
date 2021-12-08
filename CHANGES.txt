@@ -2,7 +2,7 @@
 CHANGES
 =======
 
-2.2.1 (unreleased)
+2.2.1 (2021-12-08)
 ------------------
 
 - Fix so if the user is special user from an instance script, it won't fail
