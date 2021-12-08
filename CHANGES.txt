@@ -5,7 +5,11 @@ CHANGES
 2.2.1 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Fix so if the user is special user from an instance script, it won't fail
+  [frapell]
+
+- Update to sentry-sdk 1.5.0
+  [frapell]
 
 
 2.2.0 (2021-09-25)
