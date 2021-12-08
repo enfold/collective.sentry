@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<import-steps>
+    <import-step
+        id="collective_sentry_various"
+        version="1"
+        handler="collective.sentry.setuphandlers.import_various"
+        title="SentryPlugin">
+    </import-step>
+</import-steps>

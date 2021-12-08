@@ -1,7 +1,8 @@
 <configure
-    xmlns="http://namespaces.zope.org/genericsetup">
+    xmlns="http://namespaces.zope.org/zope"
+    xmlns:genericsetup="http://namespaces.zope.org/genericsetup">
 
-    <registerProfile
+    <genericsetup:registerProfile
         name="default"
         title="collective.sentry"
         description='Extension profile for collective.sentry Product'
@@ -9,7 +10,23 @@
         directory="profiles/default"
         />
 
-    <upgradeStep
+    <genericsetup:registerProfile
+        name="plone4"
+        title="collective.sentry: Plone 4 only profile"
+        directory="profiles/plone4"
+        description='Profile intended only in Plone 4 (No need to manually run it, default install profile should do it).'
+        provides="Products.GenericSetup.interfaces.EXTENSION"
+        />
+
+    <genericsetup:registerProfile
+        name="plone5"
+        title="collective.sentry: Plone 5 only profile"
+        directory="profiles/plone5"
+        description='Profile intended only in Plone 5 (No need to manually run it, default install profile should do it).'
+        provides="Products.GenericSetup.interfaces.EXTENSION"
+        />
+
+    <genericsetup:upgradeStep
         title="Upgrade collective.sentry default profile to version 2"
         description="Upgrade collective.sentry default profile to version 2"
         source="1"
@@ -18,7 +35,7 @@
         profile="collective.sentry:default"
         />
 
-    <upgradeDepends
+    <genericsetup:upgradeDepends
         title="Upgrade collective.sentry default profile to version 3"
         description="New version of Sentry and Sentry JS"
         source="2"
@@ -26,5 +43,7 @@
         profile="collective.sentry:default"
         import_steps="jsregistry plone.app.registry"
         />
+
+    <utility factory=".setuphandlers.HiddenProfiles" name="collective.sentry" />
 
 </configure>

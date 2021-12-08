@@ -2,8 +2,43 @@
 CHANGES
 =======
 
-2.0.0 (unreleased)
+2.2.1 (unreleased)
 ------------------
+
+- Nothing changed yet.
+
+
+2.2.0 (2021-09-25)
+------------------
+
+- Allow to use the captureMessage function without having a site or request
+  [frapell]
+
+- If RELEASE is not set, do not send to Sentry
+  [frapell]
+
+
+2.1.1 (2021-07-16)
+------------------
+
+- Typo
+  [frapell]
+
+
+2.1.0 (2021-07-16)
+------------------
+
+- Restore support for Plone 4
+  [frapell]
+
+- Replace raven with newer sentry-sdk
+  [frapell]
+
+
+2.0.0 (2021-06-24)
+------------------
+
+- Add compatibility with Plone 5.2, Python 3.5-3.8
 
 - Prevent error if sentry id is not in request.
 
