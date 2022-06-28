@@ -10,6 +10,7 @@ from App.config import getConfiguration
 from Products.PageTemplates.PageTemplateFile import PageTemplateFile
 from Products.SiteErrorLog.SiteErrorLog import SiteErrorLog
 from Products.SiteErrorLog.SiteErrorLog import use_error_logging
+from collective.sentry.config import CA_CERTS_ENV_VAR
 from collective.sentry.config import SEND_ANYWAY_ENV_VAR
 from collective.sentry.config import DSN_ENV_VAR
 from collective.sentry.config import ENVIRONMENT_ENV_VAR
@@ -38,8 +39,10 @@ def get_or_create_client(dsn):
 
     environment = os.environ.get(ENVIRONMENT_ENV_VAR, None)
     release = os.environ.get(RELEASE_ENV_VAR, None)
+    ca_certs = os.environ.get(CA_CERTS_ENV_VAR, None)
     client = sentry_sdk.client.Client(
         dsn,
+        ca_certs=ca_certs,
         max_breadcrumbs=50,
         debug=False,
         environment=environment,

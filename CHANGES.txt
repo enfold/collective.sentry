@@ -5,7 +5,8 @@ CHANGES
 2.2.2 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Allow passing ca_certs option with environment variable.
+  [enfold-josh]
 
 
 2.2.1 (2021-12-08)
