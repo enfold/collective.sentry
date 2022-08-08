@@ -5,7 +5,8 @@ CHANGES
 2.2.3 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Allow passing proxy server option with environment variable.
+  [enfold-josh]
 
 
 2.2.2 (2022-06-28)

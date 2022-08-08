@@ -14,6 +14,7 @@ from collective.sentry.config import CA_CERTS_ENV_VAR
 from collective.sentry.config import SEND_ANYWAY_ENV_VAR
 from collective.sentry.config import DSN_ENV_VAR
 from collective.sentry.config import ENVIRONMENT_ENV_VAR
+from collective.sentry.config import PROXY_ENV_VAR
 from collective.sentry.config import RELEASE_ENV_VAR
 from collective.sentry.config import TRACK_JS_ENV_VAR
 from collective.sentry.config import USER_FEEDBACK_ENV_VAR
@@ -40,6 +41,15 @@ def get_or_create_client(dsn):
     environment = os.environ.get(ENVIRONMENT_ENV_VAR, None)
     release = os.environ.get(RELEASE_ENV_VAR, None)
     ca_certs = os.environ.get(CA_CERTS_ENV_VAR, None)
+    proxy = os.environ.get(PROXY_ENV_VAR, None)
+    https_proxy = None
+    http_proxy = None
+    if proxy:
+        if proxy.startswith('https'):
+            https_proxy = proxy
+        else:
+            http_proxy = proxy
+
     client = sentry_sdk.client.Client(
         dsn,
         ca_certs=ca_certs,
@@ -47,6 +57,8 @@ def get_or_create_client(dsn):
         debug=False,
         environment=environment,
         release=release,
+        https_proxy=https_proxy,
+        http_proxy=http_proxy,
         integrations=[LoggingIntegration(
             level=None,
             event_level=None
