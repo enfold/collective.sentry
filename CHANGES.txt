@@ -2,7 +2,7 @@
 CHANGES
 =======
 
-2.2.3 (unreleased)
+2.2.3 (2022-08-08)
 ------------------
 
 - Allow passing proxy server option with environment variable.
