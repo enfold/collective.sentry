@@ -35,7 +35,7 @@ setup(name='collective.sentry',
       install_requires=[
           'setuptools',
           # -*- Extra requirements: -*-
-          'sentry-sdk==1.5.0',
+          'sentry-sdk==1.33.1',
           'six',
           'plone.api',
       ],
