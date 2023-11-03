@@ -5,7 +5,11 @@ CHANGES
 2.2.4 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Upgrade sentry-sdk to 1.33.1
+  [frapell]
+
+- Add function for sentry_sdk.capture_exception
+  [frapell]
 
 
 2.2.3 (2022-08-08)
