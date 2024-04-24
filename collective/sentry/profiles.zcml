@@ -44,6 +44,15 @@
         import_steps="jsregistry plone.app.registry"
         />
 
+    <genericsetup:upgradeStep
+        title="Upgrade collective.sentry default profile to version 4"
+        description="Upgrade collective.sentry default profile to version 4"
+        source="3"
+        destination="4"
+        handler=".upgradehandlers.upgrade_from_3_to_4"
+        profile="collective.sentry:default"
+        />
+
     <utility factory=".setuphandlers.HiddenProfiles" name="collective.sentry" />
 
 </configure>

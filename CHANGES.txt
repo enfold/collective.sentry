@@ -5,7 +5,8 @@ CHANGES
 2.3.1 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Merge js bundles with default plone bundle.
+  [enfold-josh]
 
 
 2.3.0 (2024-04-17)
