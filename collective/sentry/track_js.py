@@ -1,5 +1,6 @@
 import logging
 import os
+import plone.api
 from App.config import getConfiguration
 from collective.sentry.browser.interfaces import IUserInfo
 from collective.sentry.config import ALLOWED_JS
@@ -36,7 +37,13 @@ class SentryConfig(BrowserView):
     def __call__(self):
         result = ""
         dsn = ""
-        error_log = self.context.get('error_log', None)
+        track = False
+        try:
+            portal = plone.api.portal.get()
+            error_log = portal.get('error_log', None)
+        except plone.api.exc.CannotGetPortalError:
+            logger.exception("Can't get portal")
+            error_log = None
         allowed_urls = os.environ.get(ALLOWED_JS, '')
         ignore_urls = os.environ.get(IGNORED_JS, '')
         ignore_errors = os.environ.get(IGNORED_JS_ERRORS, '')
@@ -54,6 +61,8 @@ class SentryConfig(BrowserView):
                 track = False
                 logger.info(
                     'Zope is in debug mode. Not sending JS errors to sentry')
+        else:
+            logger.warning("Couldn't get error log")
         dsn = dsn and dsn or os.environ.get(DSN_ENV_VAR, '')
         if dsn and track:
             adapter = getMultiAdapter((self.context, self.request), IUserInfo)
