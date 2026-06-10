@@ -205,7 +205,7 @@ class GetSentryErrorLog(SiteErrorLog):
             hub = Hub.current
             hub.start_session()
 
-            with sentry_sdk.push_scope() as scope:
+            with sentry_sdk.isolation_scope() as scope:
                 request = getattr(self, 'REQUEST', None)
                 if not request:
                     request = getRequest()
@@ -271,7 +271,7 @@ def captureMessage(message, **kwargs):
     if dsn:
         client = get_or_create_client(dsn)
         if client:
-            with sentry_sdk.push_scope() as scope:
+            with sentry_sdk.isolation_scope() as scope:
                 if site:
                     request = getattr(site, 'REQUEST', None)
                     if not request:
@@ -296,7 +296,7 @@ def captureException(exc, **kwargs):
     if dsn:
         client = get_or_create_client(dsn)
         if client:
-            with sentry_sdk.push_scope() as scope:
+            with sentry_sdk.isolation_scope() as scope:
                 if site:
                     request = getattr(site, 'REQUEST', None)
                     if not request:

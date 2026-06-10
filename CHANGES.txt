@@ -5,6 +5,9 @@ CHANGES
 2.3.2 (unreleased)
 ------------------
 
+- Upgrade to sentry_sdk==2.62.0
+  [frapell]
+
 - Get error log from the portal and don't fail if error log not found.
   [enfold-josh]
 
