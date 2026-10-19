@@ -2,10 +2,23 @@
 CHANGES
 =======
 
-2.5.1 (unreleased)
+2.6.0 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Link events to the OpenTelemetry trace of the request that produced them:
+  with the new ``[opentelemetry]`` extra installed and the process running the
+  OpenTelemetry SDK, an event's ``trace`` context is the request's W3C trace id
+  (the one in the infrastructure's logs and trace store), a ``trace_id`` tag
+  carries it, and ``GETSENTRY_GRAFANA_URL`` adds a ``trace_url`` extra that
+  opens the trace in Grafana (data source UID from ``GETSENTRY_TRACE_DATASOURCE``,
+  default ``tempo``). See ``collective/sentry/tracing.py``.
+  [frapell]
+
+- Use sentry-sdk's scope API instead of the deprecated ``Hub``.
+  [frapell]
+
+- Require ``sentry-sdk>=2.62,<3`` instead of pinning one version.
+  [frapell]
 
 
 2.5.0 (2026-06-10)

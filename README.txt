@@ -192,6 +192,29 @@ environment-vars =
     GETSENTRY_TRACK_JS true
     GETSENTRY_USER_FEEDBACK true
 
+Request traces (OpenTelemetry)
+------------------------------
+
+If the process runs the OpenTelemetry SDK -- a WSGI middleware continuing the
+``traceparent`` the request arrived with -- collective.sentry links each event
+to that trace. Install the extra::
+
+    collective.sentry[opentelemetry]
+
+and every event's ``trace`` context becomes the request's trace id (the same
+id in the proxies' access logs and in the trace store), with a ``trace_id``
+tag for searching and alerting. To get a link to the trace on the issue, point
+``GETSENTRY_GRAFANA_URL`` at the Grafana in front of the trace store; the
+Tempo data source UID defaults to ``tempo`` and can be set with
+``GETSENTRY_TRACE_DATASOURCE``:
+
+environment-vars =
+    GETSENTRY_GRAFANA_URL https://grafana.example.org
+    GETSENTRY_TRACE_DATASOURCE tempo
+
+Nothing is sent to Sentry's own performance product; the SDK's tracing stays
+off. Without the extra, or outside a request, events keep Sentry's own ids.
+
 Debug Mode
 ----------
 

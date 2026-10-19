@@ -6,7 +6,7 @@ def read(*rnames):
 
 
 setup(name='collective.sentry',
-      version='2.5.1.dev0',
+      version='2.6.0.dev0',
       description="Replace default Plone error_log to send data to GetSentry service",
       long_description=read('README.txt') + '\n',
       classifiers=[
@@ -35,11 +35,18 @@ setup(name='collective.sentry',
       install_requires=[
           'setuptools',
           # -*- Extra requirements: -*-
-          'sentry-sdk==2.62.0',
+          # >=2.62: register_external_propagation_context (tracing.py).
+          # <3: 3.x is the OpenTelemetry-based rewrite, not yet released.
+          'sentry-sdk>=2.62,<3',
           'six',
           'plone.api',
       ],
       extras_require={
+          # Link events to the OpenTelemetry trace of the request (tracing.py).
+          # Only the API package: the process is expected to run its own SDK.
+          "opentelemetry": [
+              'opentelemetry-api>=1.20',
+              ],
           "test": [
               'cssselect',
               'lxml',

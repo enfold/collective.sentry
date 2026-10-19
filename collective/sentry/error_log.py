@@ -18,7 +18,7 @@ from collective.sentry.config import PROXY_ENV_VAR
 from collective.sentry.config import RELEASE_ENV_VAR
 from collective.sentry.config import TRACK_JS_ENV_VAR
 from collective.sentry.config import USER_FEEDBACK_ENV_VAR
-from sentry_sdk.hub import Hub
+from collective.sentry import tracing
 from sentry_sdk.integrations.logging import LoggingIntegration
 from sentry_sdk.utils import event_from_exception
 from zope.globalrequest import getRequest
@@ -32,11 +32,16 @@ logger = logging.getLogger('collective.sentry')
 
 _www = os.path.dirname(__file__)
 
+# Take each event's trace context from the OpenTelemetry span of the request
+# that produced it, when the process runs the SDK (see tracing.py). A no-op
+# without the [opentelemetry] extra.
+tracing.register()
+
 
 def get_or_create_client(dsn):
-    if Hub.current.client:
-        if Hub.current.client.dsn == dsn:
-            return Hub.current.client
+    client = sentry_sdk.get_client()
+    if client.is_active() and client.dsn == dsn:
+        return client
 
     environment = os.environ.get(ENVIRONMENT_ENV_VAR, None)
     release = os.environ.get(RELEASE_ENV_VAR, None)
@@ -50,7 +55,7 @@ def get_or_create_client(dsn):
         else:
             http_proxy = proxy
 
-    client = sentry_sdk.client.Client(
+    client = sentry_sdk.Client(
         dsn,
         ca_certs=ca_certs,
         max_breadcrumbs=50,
@@ -63,7 +68,7 @@ def get_or_create_client(dsn):
             level=None,
             event_level=None
         )])
-    Hub.current.bind_client(client)
+    sentry_sdk.get_global_scope().set_client(client)
     return client
 
 
@@ -144,6 +149,18 @@ def _set_tags_from_request(scope, request):
     tags["instance_name"] = instancehome.rsplit(os.path.sep, 1)[-1]
     tags["url"] = request.get("ACTUAL_URL")
 
+    # The request's trace id, as nginx minted it and every hop logged it. The
+    # event's `trace` context carries it too (tracing.register); the tag makes
+    # it visible on the issue list and usable in alert rules, and the link
+    # opens the trace in Grafana.
+    trace = tracing.current_trace()
+    if trace is not None:
+        trace_id = trace[0]
+        tags["trace_id"] = trace_id
+        trace_url = tracing.grafana_trace_url(trace_id)
+        if trace_url:
+            scope.set_extra("trace_url", trace_url)
+
     for k, v in tags.items():
         scope.set_tag(k, v)
 
@@ -202,8 +219,7 @@ class GetSentryErrorLog(SiteErrorLog):
         if res is not None:
             client = get_or_create_client(dsn)
             event, hint = event_from_exception(exc_info, client_options=client.options)
-            hub = Hub.current
-            hub.start_session()
+            sentry_sdk.start_session()
 
             with sentry_sdk.isolation_scope() as scope:
                 request = getattr(self, 'REQUEST', None)
@@ -212,7 +228,7 @@ class GetSentryErrorLog(SiteErrorLog):
 
                 _prepare_scope_and_event(request, scope, event)
                 sentry_sdk.capture_event(event, hint, scope)
-            hub.end_session()
+            sentry_sdk.end_session()
 
         return res
 
