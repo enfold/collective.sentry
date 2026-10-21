@@ -2,7 +2,7 @@
 CHANGES
 =======
 
-2.6.0 (unreleased)
+2.6.0 (2026-10-21)
 ------------------
 
 - Link events to the OpenTelemetry trace of the request that produced them:
