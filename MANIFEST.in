@@ -4,4 +4,5 @@ include MANIFEST.in
 include *.py
 include *.cfg
 include tox.ini
+exclude Makefile
 global-exclude *pyc
