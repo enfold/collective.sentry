@@ -11,14 +11,12 @@ setup(name='collective.sentry',
       long_description=read('README.txt') + '\n',
       classifiers=[
         'Framework :: Plone',
-        'Framework :: Plone :: 5.2',
-        'Programming Language :: Python :: 2',
-        'Programming Language :: Python :: 2.7',
+        'Framework :: Plone :: 6.1',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.5',
-        'Programming Language :: Python :: 3.6',
-        'Programming Language :: Python :: 3.7',
-        'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.10',
+        'Programming Language :: Python :: 3.11',
+        'Programming Language :: Python :: 3.12',
+        'Programming Language :: Python :: 3.13',
         'Programming Language :: Python :: Implementation :: CPython',
         'License :: OSI Approved :: GNU General Public License (GPL)',
         'Development Status :: 5 - Production/Stable',
@@ -61,7 +59,7 @@ setup(name='collective.sentry',
       [z3c.autoinclude.plugin]
       target = plone
 
-      [celery_tasks]
+      [procrastinate_tasks]
       sentryhook = collective.sentry.tasks
       """,
       )

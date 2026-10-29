@@ -115,15 +115,16 @@ def unhealthy_condition():
 Include any additional information that should show up in the error report
 using the extra parameter.
 
-Sending Notifications from collective.celery Tasks
---------------------------------------------------
+Sending Notifications from Background Jobs
+------------------------------------------
 
-When running collective.celery tasks, the error log is bypassed when errors
-occur during a task. Collective.sentry has a hook to register the sentry
-client with collective.celery. However, the hook will ONLY work if the
-GETSENTRY_DSN environment variable is set. In other words, for
-collective.sentry to log errors from celery tasks, using the GETSENTRY_DSN
-variable is REQUIRED.
+Jobs run by collective.procrastinate workers (``pprocrastinate worker``)
+bypass the error log when they fail. Collective.sentry registers a worker
+hook (``collective.sentry.tasks``, ``[procrastinate_tasks]`` entry point) that
+initialises sentry_sdk when the worker starts; failed jobs are logged at ERROR
+and reported through sentry_sdk's logging integration. The hook reads
+GETSENTRY_DSN from the zope.conf ``environment`` section, so for
+collective.sentry to report errors from jobs, GETSENTRY_DSN is REQUIRED there.
 
 Javascript
 ----------

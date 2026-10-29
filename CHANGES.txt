@@ -5,7 +5,11 @@ CHANGES
 2.6.1 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Initialise Sentry in collective.procrastinate workers instead of celery
+  workers: the hook is registered under ``[procrastinate_tasks]`` and no
+  longer uses sentry_sdk's Celery integration; failed jobs are reported
+  through the logging integration.
+  [FP 2026-10-29]
 
 
 2.6.0 (2026-10-21)
